@@ -1,5 +1,6 @@
 const express = require("express");
 const UserModel = require("../models/User.model");
+const bcrypt = require("bcryptjs")
 const app = express();
 
 const addUserToDb=  async (req, res) => {
@@ -8,7 +9,10 @@ const addUserToDb=  async (req, res) => {
   console.log(req.body);
 
   try {
-    const user = await UserModel.create(req.body);
+
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    const user = await UserModel.create({firstName, lastName, email,password:hashedPassword });
 
     if (user) {
       // res.send("user created successfully")
