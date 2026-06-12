@@ -1,12 +1,13 @@
 const express= require("express")
-const { addUserToDb, getUserFromDb, deleteUser, updateUser } = require("../controllers/User.controller")
+const { getUserFromDb, deleteUser, updateUser, register, loginUser, verifyUser } = require("../controllers/User.controller")
 const router = express.Router()
 
 
-router.post("/addUserToDb", addUserToDb)
-router.get("/getUserFromDb", getUserFromDb)
-router.delete("/user/:id", deleteUser)
-router.patch("/user/:id", updateUser)
+router.post("/register", register)
+router.get("/getUserFromDb",verifyUser, getUserFromDb)
+router.delete("/user/:id",verifyUser, deleteUser)
+router.patch("/user/:id",verifyUser, updateUser)
+router.post("/login", loginUser)
 
 
 module.exports = router
