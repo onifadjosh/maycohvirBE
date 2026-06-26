@@ -3,26 +3,88 @@ const UserModel = require("../models/User.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const app = express();
+const nodemailer = require("nodemailer")
+const cloudinary = require("cloudinary").v2
+
+
+cloudinary.config({
+  cloud_name:process.env.CLOUD_NAME,
+  api_key:process.env.CLOUD_KEY,
+  api_secret:process.env.CLOUD_SECRET
+})
+
+
+
+let transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.APP_MAIL,
+    pass: process.env.APP_PASSWORD
+  }
+});
+
+
 
 const register = async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, image } = req.body;
 
   console.log(req.body);
 
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    // collect raw image->convert to base 64 -> sends it to cloudinary-> cloudinary collects and turns to a secure url link.
+    const convertedImage = await cloudinary.uploader.upload(image)
+    .then((result)=>{
+      return {
+        public_id:result.public_id,
+        secure_url:result.secure_url
+      }
+    })
+  
+
+
     const user = await UserModel.create({
       firstName,
       lastName,
       email,
       password: hashedPassword,
+      image:convertedImage
     });
 
     if (user) {
       // res.send("user created successfully")
       const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "5h",
+      });
+
+      let mailOptions = {
+        from: process.env.APP_MAIL,
+        bcc: [email, "solankeolamide.so@gmail.com", "zulykhaayomide@gmail.com", "adenix271@gmail.com", "odetorodanieloluwatofunmi@gmail.com", "Skiller19@gmail.com"],
+        subject: 'Welcome Aboard 🥳',
+        // text: 'That was easy!'
+        html:`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+  <h1>Welcome ${firstName}</h1>
+     <h1>Welcome to Himer Stores, kindly complete your registration</h1>
+</body>
+</html>`
+      };
+
+
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
       });
       res.status(201).send({
         message: "user created successfully",
