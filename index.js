@@ -1,11 +1,14 @@
+require("node:dns/promises").setServers(["1.1.1.1", "8.8.8.8"]);
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const cors = require("cors")
 dotenv.config();
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true })); //body parser
 app.use(express.json());
+app.use(cors())
 
 let URI = process.env.MONGODB_URI;
 mongoose
